@@ -10,6 +10,7 @@ from dagster import (
     EventMetadata,
     Failure,
     Field,
+    IntSource,
     StringSource,
     __version__,
     check,
@@ -423,7 +424,7 @@ class DbtCloudResourceV2:
             "for instructions on creating a Service Account token.",
         ),
         "account_id": Field(
-            int,
+            IntSource,
             is_required=True,
             description="dbt Cloud Account ID. This value can be found in the url of a variety of "
             "views in the dbt Cloud UI, e.g. https://cloud.getdbt.com/#/accounts/{account_id}/settings/.",
