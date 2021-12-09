@@ -244,51 +244,68 @@ def execute_step_command(input_json):
             if args.instance_ref
             else DagsterInstance.get()
         ) as instance:
-            pipeline_run = instance.get_run_by_id(args.pipeline_run_id)
-            check.inst(
-                pipeline_run,
-                PipelineRun,
-                "Pipeline run with id '{}' not found for step execution".format(
-                    args.pipeline_run_id
-                ),
-            )
+            if instance.should_start_background_step_thread:
+                (
+                    cancellation_thread,
+                    cancellation_thread_shutdown_event,
+                ) = start_step_cancellation_thread(instance, args.pipeline_run_id)
 
-            if args.should_verify_step:
-                success = verify_step(
-                    instance,
+            try:
+                pipeline_run = instance.get_run_by_id(args.pipeline_run_id)
+                check.inst(
                     pipeline_run,
-                    args.known_state.get_retry_state(),
-                    args.step_keys_to_execute,
+                    PipelineRun,
+                    "Pipeline run with id '{}' not found for step execution".format(
+                        args.pipeline_run_id
+                    ),
                 )
-                if not success:
-                    return
 
-            recon_pipeline = recon_pipeline_from_origin(
-                args.pipeline_origin
-            ).subset_for_execution_from_existing_pipeline(pipeline_run.solids_to_execute)
+                if args.should_verify_step:
+                    success = verify_step(
+                        instance,
+                        pipeline_run,
+                        args.known_state.get_retry_state(),
+                        args.step_keys_to_execute,
+                    )
+                    if not success:
+                        return
 
-            execution_plan = create_execution_plan(
-                recon_pipeline,
-                run_config=pipeline_run.run_config,
-                step_keys_to_execute=args.step_keys_to_execute,
-                mode=pipeline_run.mode,
-                known_state=args.known_state,
-            )
+                recon_pipeline = recon_pipeline_from_origin(
+                    args.pipeline_origin
+                ).subset_for_execution_from_existing_pipeline(pipeline_run.solids_to_execute)
 
-            buff = []
+                execution_plan = create_execution_plan(
+                    recon_pipeline,
+                    run_config=pipeline_run.run_config,
+                    step_keys_to_execute=args.step_keys_to_execute,
+                    mode=pipeline_run.mode,
+                    known_state=args.known_state,
+                )
 
-            for event in execute_plan_iterator(
-                execution_plan,
-                recon_pipeline,
-                pipeline_run,
-                instance,
-                run_config=pipeline_run.run_config,
-                retry_mode=args.retry_mode,
-            ):
-                buff.append(serialize_dagster_namedtuple(event))
+                buff = []
 
-            for line in buff:
-                click.echo(line)
+                for event in execute_plan_iterator(
+                    execution_plan,
+                    recon_pipeline,
+                    pipeline_run,
+                    instance,
+                    run_config=pipeline_run.run_config,
+                    retry_mode=args.retry_mode,
+                ):
+                    buff.append(serialize_dagster_namedtuple(event))
+
+                for line in buff:
+                    click.echo(line)
+            finally:
+                if instance.should_start_background_step_thread:
+                    cancellation_thread_shutdown_event.set()
+                    if cancellation_thread.is_alive():
+                        cancellation_thread.join(timeout=15)
+                        if cancellation_thread.is_alive():
+                            instance.report_engine_event(
+                                "Cancellation thread did not shutdown gracefully",
+                                pipeline_run,
+                            )
 
 
 @api_cli.command(name="grpc", help="Serve the Dagster inter-process API over GRPC")

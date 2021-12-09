@@ -1809,6 +1809,13 @@ records = instance.get_event_records(
         """
         return False
 
+    @property
+    def should_start_background_step_thread(self) -> bool:
+        """
+        Gate on an experimental feature to start a thread that monitors for if the step should be canceled.
+        """
+        return False
+
 
 def is_dagit_telemetry_enabled(instance):
     telemetry_settings = instance.get_settings("telemetry")
