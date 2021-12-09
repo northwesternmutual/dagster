@@ -43,7 +43,7 @@ def test_compute_log_manager(
         easy()
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        with environ({"DAGSTER_HOME": temp_dir}):
+        with environ({"DAGSTER_HOME": temp_dir, "DAGSTER_DISABLE_TELEMETRY": True}):
             run_store = SqliteRunStorage.from_local(temp_dir)
             event_store = SqliteEventLogStorage(temp_dir)
             manager = AzureBlobComputeLogManager(

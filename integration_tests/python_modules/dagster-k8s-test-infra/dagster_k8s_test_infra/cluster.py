@@ -282,7 +282,7 @@ def helm_postgres_url(helm_namespace):
 def dagster_instance(helm_postgres_url):  # pylint: disable=redefined-outer-name
 
     with tempfile.TemporaryDirectory() as tempdir:
-        with environ({"DAGSTER_HOME": tempdir}):
+        with environ({"DAGSTER_HOME": tempdir, "DAGSTER_DISABLE_TELEMETRY": True}):
 
             with DagsterInstance(
                 instance_type=InstanceType.PERSISTENT,

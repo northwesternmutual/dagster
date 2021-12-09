@@ -279,7 +279,7 @@ def test_dagit_logs(
 ):
     with tempfile.TemporaryDirectory() as temp_dir:
         with instance_for_test(temp_dir=temp_dir):
-            runner = CliRunner(env={"DAGSTER_HOME": temp_dir})
+            runner = CliRunner(env={"DAGSTER_HOME": temp_dir, "DAGSTER_DISABLE_TELEMETRY": True})
             workspace_path = file_relative_path(__file__, "telemetry_repository.yaml")
             result = runner.invoke(
                 ui,

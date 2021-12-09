@@ -36,7 +36,7 @@ def test_compute_log_manager(mock_s3_bucket):
         easy()
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        with environ({"DAGSTER_HOME": temp_dir}):
+        with environ({"DAGSTER_HOME": temp_dir, "DAGSTER_DISABLE_TELEMETRY": True}):
             run_store = SqliteRunStorage.from_local(temp_dir)
             event_store = SqliteEventLogStorage(temp_dir)
             manager = S3ComputeLogManager(
@@ -126,7 +126,7 @@ def test_compute_log_manager_skip_empty_upload(mock_s3_bucket):
         easy()
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        with environ({"DAGSTER_HOME": temp_dir}):
+        with environ({"DAGSTER_HOME": temp_dir, "DAGSTER_DISABLE_TELEMETRY": True}):
             run_store = SqliteRunStorage.from_local(temp_dir)
             event_store = SqliteEventLogStorage(temp_dir)
             PREFIX = "my_prefix"

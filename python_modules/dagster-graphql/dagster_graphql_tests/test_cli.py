@@ -24,7 +24,9 @@ def dagster_cli_runner():
                 }
             },
         ):
-            yield CliRunner(env={"DAGSTER_HOME": dagster_home_temp})
+            yield CliRunner(
+                env={"DAGSTER_HOME": dagster_home_temp, "DAGSTER_DISABLE_TELEMETRY": True}
+            )
 
 
 def test_basic_introspection():
@@ -294,7 +296,7 @@ def test_logs_in_start_execution_predefined():
                 }
             },
         ) as instance:
-            runner = CliRunner(env={"DAGSTER_HOME": temp_dir})
+            runner = CliRunner(env={"DAGSTER_HOME": temp_dir, "DAGSTER_DISABLE_TELEMETRY": True})
             result = runner.invoke(
                 ui, ["-w", workspace_path, "-v", variables, "-p", "launchPipelineExecution"]
             )
